@@ -299,7 +299,8 @@
                 const response = await fetch(`${API_URL}/start`, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'ngrok-skip-browser-warning': 'true'
                     }
                 });
                 
@@ -334,7 +335,11 @@
             
             try {
                 // Gọi API để lấy dữ liệu
-                const response = await fetch(`${API_URL}/attendance`);
+                const response = await fetch(`${API_URL}/attendance`, {
+                    headers: {
+                        'ngrok-skip-browser-warning': 'true'  // ← THÊM DÒNG NÀY
+                    }
+                });
                 const data = await response.json();
                 
                 if (data.success && data.records.length > 0) {
@@ -373,4 +378,5 @@
         };
     </script>
 </body>
+
 </html>
