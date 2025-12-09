@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hệ Thống Chấm Công Tự Động</title>
+    <title>Hệ THỐNG CHẤM CÔNG TỰ ĐỘNG</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #dc143c 0%, #8b0000 100%);
             min-height: 100vh;
             padding: 20px;
         }
@@ -21,12 +21,29 @@
             overflow: hidden;
         }
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #dc143c 0%, #b22222 100%);
             color: white;
             padding: 30px;
             text-align: center;
+            position: relative;
         }
-        .header h1 { font-size: 2.5em; margin-bottom: 10px; }
+        .logo {
+            position: absolute;
+            top: 20px;
+            left: 30px;
+            width: 80px;
+            height: 80px;
+            background: white;
+            border-radius: 10px;
+            padding: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+        .logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        .header h1 { font-size: 2.5em; margin-bottom: 10px; margin-left: 100px; }
         .alert-banner {
             display: none;
             background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%);
@@ -51,7 +68,7 @@
         .stat-card h3 { font-size: 2.5em; margin-bottom: 5px; }
         .stat-card.success h3 { color: #28a745; }
         .stat-card.danger h3 { color: #dc3545; }
-        .stat-card.info h3 { color: #667eea; }
+        .stat-card.info h3 { color: #dc143c; }
         .controls {
             padding: 20px 30px; display: flex; gap: 15px;
             justify-content: center; background: #f8f9fa;
@@ -59,21 +76,21 @@
         .btn {
             padding: 12px 25px; font-size: 1em; border: none;
             border-radius: 10px; cursor: pointer; transition: all 0.3s ease;
-            font-weight: bold; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            font-weight: bold; background: linear-gradient(135deg, #dc143c 0%, #b22222 100%);
             color: white;
         }
-        .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(56, 239, 125, 0.4); }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(220, 20, 60, 0.4); }
         .loading { display: none; text-align: center; padding: 40px; }
         .loading.active { display: block; }
         .spinner {
-            border: 4px solid #f3f3f3; border-top: 4px solid #667eea;
+            border: 4px solid #f3f3f3; border-top: 4px solid #dc143c;
             border-radius: 50%; width: 50px; height: 50px;
             animation: spin 1s linear infinite; margin: 0 auto 20px;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .table-container { padding: 30px; overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; background: white; }
-        thead { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        thead { background: linear-gradient(135deg, #dc143c 0%, #b22222 100%); color: white; }
         th { padding: 15px; text-align: left; font-weight: bold; font-size: 1.1em; }
         td { padding: 15px; border-bottom: 1px solid #dee2e6; }
         tbody tr:hover { background: #f8f9fa; }
@@ -106,18 +123,22 @@
         /* Responsive */
         @media (max-width: 768px) {
             .stats-panel { flex-direction: column; }
-            .header h1 { font-size: 1.8em; }
+            .header h1 { font-size: 1.8em; margin-left: 0; margin-top: 50px; }
+            .logo { width: 60px; height: 60px; top: 15px; left: 15px; }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
+            <div class="logo">
+                <img src="https://i.imgur.com/9xQJ8Zx.png" alt="PTIT Logo">
+            </div>
             <h1>Hệ Thống Chấm Công Tự Động</h1>
         </div>
 
         <div class="alert-banner" id="alertBanner">
-            CẢNH BÁO: PHÁT HIỆN NGƯỜI LẠ GẦN ĐÂY!️
+            CẢNH BÁO: PHÁT HIỆN NGƯỜI LẠ GẦN ĐÂY!
         </div>
 
         <div class="stats-panel">
@@ -137,7 +158,7 @@
 
         <div class="controls">
             <button class="btn" onclick="loadAttendance()">
-                🔄 Tải Lại Dữ Liệu
+                Tải lại dữ liệu
             </button>
         </div>
 
@@ -179,8 +200,6 @@
     </div>
 
     <script>
-        // ⭐ LƯU Ý QUAN TRỌNG:
-        // Thay link này bằng link Ngrok mới mỗi khi bạn bật lại ngrok (copy dòng Forwarding https://...)
         const API_URL = 'https://hurtfully-untarred-londa.ngrok-free.dev'; 
 
         function showPhoto(imageUrl) {
@@ -201,7 +220,6 @@
             loading.classList.add('active');
             
             try {
-                // ⭐ ĐÃ SỬA: Thêm headers để bypass cảnh báo Ngrok
                 const response = await fetch(`${API_URL}/attendance`, {
                     headers: {
                         "ngrok-skip-browser-warning": "true",
@@ -217,20 +235,15 @@
                     let intruderCount = 0;
                     let attendanceCount = 0;
                     let hasRecentIntruder = false;
-                    const today = new Date().toLocaleDateString('vi-VN'); // Lấy ngày định dạng VN
-                    
-                    // Sửa lỗi ngày tháng so sánh nếu Google Sheets format khác
-                    // Cần đảm bảo cột 'date' trong Sheet cũng là dd/mm/yyyy
+                    const today = new Date().toLocaleDateString('vi-VN');
                     
                     data.records.forEach((record, index) => {
                         const isIntruder = record.id === 'UNKNOWN' || record.name.includes('NGƯỜI LẠ');
-                        
-                        // Kiểm tra ngày tương đối (cần chỉnh lại nếu Sheet lưu format khác)
                         const isToday = record.date === today || record.date.includes(today); 
                         
                         if (isIntruder) {
                             intruderCount++;
-                            if (index < 5) hasRecentIntruder = true; // Nếu người lạ nằm trong 5 bản ghi mới nhất
+                            if (index < 5) hasRecentIntruder = true;
                         } else if (isToday) {
                             attendanceCount++;
                         }
@@ -238,12 +251,11 @@
                         const rowClass = isIntruder ? 'intruder-row' : '';
                         const badgeClass = isIntruder ? 'badge-danger' : 'badge-success';
                         
-                        // Xử lý hiển thị ảnh
                         let photoHTML = '';
                         if (record.photo && record.photo.trim() !== '') {
                             photoHTML = `<img src="${record.photo}" class="photo-thumbnail" onclick="showPhoto('${record.photo}')" alt="Ảnh">`;
                         } else {
-                            photoHTML = `<span class="no-photo">Không ảnh</span>`;
+                            photoHTML = `<span class="no-photo">Không có ảnh</span>`;
                         }
                         
                         const row = `
@@ -288,9 +300,7 @@
                 table.innerHTML = `
                     <tr>
                         <td colspan="6" style="text-align: center; padding: 40px; color: red;">
-                            ❌ Không thể kết nối server!<br>
-                            1. Kiểm tra API_URL có đúng link Ngrok mới chưa?<br>
-                            2. Flask Server có đang chạy không?
+                            Không thể kết nối server!<br>
                         </td>
                     </tr>
                 `;
@@ -301,9 +311,8 @@
 
         window.onload = () => {
             loadAttendance();
-            setInterval(loadAttendance, 10000); // 10 giây tự reload 1 lần
+            setInterval(loadAttendance, 10000);
         };
     </script>
 </body>
 </html>
-
