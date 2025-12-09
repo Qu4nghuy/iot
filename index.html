@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hệ Thống Chấm Công ESP32-CAM</title>
+    <title>Hệ Thống Chấm Công Tự Động</title>
     <style>
         * {
             margin: 0;
@@ -44,36 +44,89 @@
             opacity: 0.9;
         }
 
-        .controls {
-            padding: 30px;
+        .info-banner {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            padding: 15px 30px;
+            text-align: center;
+            font-size: 1em;
+        }
+
+        .alert-banner {
+            display: none;
+            background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%);
+            color: white;
+            padding: 20px 30px;
+            animation: blink 1s infinite;
+            text-align: center;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        .alert-banner.active {
+            display: block;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .stats-panel {
             display: flex;
             gap: 15px;
-            flex-wrap: wrap;
+            padding: 20px 30px;
+            justify-content: space-around;
+            background: #f8f9fa;
+        }
+
+        .stat-card {
+            flex: 1;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            font-size: 2.5em;
+            margin-bottom: 5px;
+        }
+
+        .stat-card p {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .stat-card.success h3 {
+            color: #28a745;
+        }
+
+        .stat-card.danger h3 {
+            color: #dc3545;
+        }
+
+        .stat-card.info h3 {
+            color: #667eea;
+        }
+
+        .controls {
+            padding: 20px 30px;
+            display: flex;
+            gap: 15px;
             justify-content: center;
             background: #f8f9fa;
         }
 
         .btn {
-            padding: 15px 30px;
-            font-size: 1.1em;
+            padding: 12px 25px;
+            font-size: 1em;
             border: none;
             border-radius: 10px;
             cursor: pointer;
             transition: all 0.3s ease;
             font-weight: bold;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
         }
 
         .btn-success {
@@ -86,33 +139,29 @@
             box-shadow: 0 5px 20px rgba(56, 239, 125, 0.4);
         }
 
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none !important;
-        }
-
-        .status-bar {
-            padding: 20px 30px;
-            background: #fff3cd;
-            border-left: 5px solid #ffc107;
-            margin: 0 30px;
-            border-radius: 10px;
+        .loading {
             display: none;
+            text-align: center;
+            padding: 40px;
         }
 
-        .status-bar.active {
+        .loading.active {
             display: block;
         }
 
-        .status-bar.success {
-            background: #d4edda;
-            border-color: #28a745;
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
         }
 
-        .status-bar.error {
-            background: #f8d7da;
-            border-color: #dc3545;
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
         .table-container {
@@ -143,8 +192,87 @@
             border-bottom: 1px solid #dee2e6;
         }
 
+        /* ⭐ Style cho ảnh trong bảng */
+        .photo-cell {
+            text-align: center;
+        }
+
+        .photo-thumbnail {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .photo-thumbnail:hover {
+            transform: scale(1.1);
+        }
+
+        .no-photo {
+            color: #999;
+            font-size: 0.9em;
+        }
+
+        /* Modal xem ảnh phóng to */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.9);
+            animation: fadeIn 0.3s;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 40px;
+            color: white;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .modal-close:hover {
+            color: #f44336;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
         tbody tr:hover {
             background: #f8f9fa;
+        }
+
+        tbody tr.intruder-row {
+            background: #ffe6e6 !important;
+            animation: pulse-red 2s infinite;
+        }
+
+        @keyframes pulse-red {
+            0%, 100% { background: #ffe6e6; }
+            50% { background: #ffcccc; }
         }
 
         .badge {
@@ -159,52 +287,32 @@
             color: #155724;
         }
 
-        .loading {
-            display: none;
-            text-align: center;
-            padding: 40px;
-        }
-
-        .loading.active {
-            display: block;
-        }
-
-        .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .camera-status {
-            padding: 20px 30px;
-            margin: 0 30px 20px;
-            background: #e7f3ff;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
+        .badge-danger {
+            background: #f8d7da;
+            color: #721c24;
         }
 
         .status-indicator {
-            width: 15px;
-            height: 15px;
+            width: 12px;
+            height: 12px;
             border-radius: 50%;
             background: #28a745;
-            animation: pulse 2s infinite;
+            display: inline-block;
+            animation: pulse-dot 2s infinite;
+            margin-right: 8px;
         }
 
-        @keyframes pulse {
+        @keyframes pulse-dot {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.5; }
+        }
+
+        .last-update {
+            text-align: center;
+            padding: 10px;
+            color: #666;
+            font-size: 0.9em;
+            background: #f8f9fa;
         }
 
         @media (max-width: 768px) {
@@ -212,13 +320,12 @@
                 font-size: 1.8em;
             }
             
-            .controls {
+            .stats-panel {
                 flex-direction: column;
             }
-            
-            .btn {
-                width: 100%;
-                justify-content: center;
+
+            .stat-card h3 {
+                font-size: 2em;
             }
         }
     </style>
@@ -226,25 +333,39 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🔐 Hệ Thống Chấm Công</h1>
-            <p>ESP32-CAM Face Recognition System</p>
+            <h1>🤖 Hệ Thống Chấm Công Tự Động</h1>
+            <p>ESP32-CAM Face Recognition 24/7 + Email Alert</p>
         </div>
 
-        <div class="camera-status">
-            <div class="status-indicator"></div>
-            <span><strong>Hệ thống:</strong> <span id="systemStatus">Đang chờ kết nối...</span></span>
+        <div class="info-banner">
+            <span class="status-indicator"></span>
+            <strong>CHẾ ĐỘ TỰ ĐỘNG:</strong> Hệ thống đang hoạt động 24/7 - Không cần bấm nút - Tự động nhận diện khi có người
+        </div>
+
+        <div class="alert-banner" id="alertBanner">
+            ⚠️ CẢNH BÁO: PHÁT HIỆN NGƯỜI LẠ GẦN ĐÂY! ⚠️
+        </div>
+
+        <div class="stats-panel">
+            <div class="stat-card success">
+                <h3 id="totalAttendance">0</h3>
+                <p>Chấm công hôm nay</p>
+            </div>
+            <div class="stat-card danger">
+                <h3 id="totalIntruders">0</h3>
+                <p>Cảnh báo người lạ</p>
+            </div>
+            <div class="stat-card info">
+                <h3 id="totalRecords">0</h3>
+                <p>Tổng bản ghi</p>
+            </div>
         </div>
 
         <div class="controls">
-            <button class="btn btn-primary" id="startBtn" onclick="startAttendance()">
-                📷 Bắt Đầu Chấm Công
-            </button>
-            <button class="btn btn-success" id="refreshBtn" onclick="loadAttendance()">
+            <button class="btn btn-success" onclick="loadAttendance()">
                 🔄 Tải Lại Dữ Liệu
             </button>
         </div>
-
-        <div class="status-bar" id="statusBar"></div>
 
         <div class="loading" id="loading">
             <div class="spinner"></div>
@@ -260,72 +381,48 @@
                         <th>Ngày</th>
                         <th>Giờ</th>
                         <th>Trạng Thái</th>
+                        <th>Ảnh</th>
                     </tr>
                 </thead>
                 <tbody id="attendanceTable">
                     <tr>
-                        <td colspan="5" style="text-align: center; padding: 40px;">
-                            Chưa có dữ liệu chấm công
+                        <td colspan="6" style="text-align: center; padding: 40px;">
+                            Đang tải dữ liệu...
                         </td>
                     </tr>
                 </tbody>
             </table>
         </div>
+
+        <div class="last-update">
+            Cập nhật lần cuối: <span id="lastUpdate">Chưa có dữ liệu</span>
+        </div>
+    </div>
+
+    <!-- ⭐ Modal xem ảnh phóng to -->
+    <div class="modal" id="photoModal" onclick="closeModal()">
+        <span class="modal-close">&times;</span>
+        <img class="modal-content" id="modalImage">
     </div>
 
     <script>
         // CẤU HÌNH API
-        const API_URL = 'https://hurtfully-untarred-londa.ngrok-free.dev';  // URL Flask API chạy local
-        const GOOGLE_SHEET_URL = 'YOUR_GOOGLE_SHEET_JSON_URL';  // URL để lấy data từ Google Sheets
+        const API_URL = 'https://hurtfully-untarred-londa.ngrok-free.dev';
 
-        // Hiển thị thông báo
-        function showStatus(message, type = 'info') {
-            const statusBar = document.getElementById('statusBar');
-            statusBar.className = `status-bar active ${type}`;
-            statusBar.textContent = message;
-            
-            setTimeout(() => {
-                statusBar.classList.remove('active');
-            }, 5000);
+        // ⭐ Hiển thị ảnh phóng to
+        function showPhoto(imageUrl) {
+            const modal = document.getElementById('photoModal');
+            const modalImg = document.getElementById('modalImage');
+            modal.classList.add('active');
+            modalImg.src = imageUrl;
         }
 
-        // Bắt đầu chấm công
-        async function startAttendance() {
-            const btn = document.getElementById('startBtn');
-            btn.disabled = true;
-            btn.textContent = '⏳ Đang khởi động...';
-            
-            try {
-                const response = await fetch(`${API_URL}/start`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    showStatus('✅ Hệ thống nhận diện đã khởi động! Vui lòng đứng trước camera.', 'success');
-                    document.getElementById('systemStatus').textContent = 'Đang nhận diện...';
-                    
-                    // Tự động tải lại sau 3 giây
-                    setTimeout(() => {
-                        loadAttendance();
-                    }, 3000);
-                } else {
-                    showStatus('❌ Lỗi: ' + data.message, 'error');
-                }
-            } catch (error) {
-                showStatus('❌ Không thể kết nối đến server Python. Hãy đảm bảo Flask API đang chạy!', 'error');
-                console.error(error);
-            } finally {
-                btn.disabled = false;
-                btn.textContent = '📷 Bắt Đầu Chấm Công';
-            }
+        function closeModal() {
+            const modal = document.getElementById('photoModal');
+            modal.classList.remove('active');
         }
 
-        // Tải dữ liệu chấm công từ Google Sheets
+        // Tải dữ liệu chấm công
         async function loadAttendance() {
             const loading = document.getElementById('loading');
             const table = document.getElementById('attendanceTable');
@@ -333,33 +430,99 @@
             loading.classList.add('active');
             
             try {
-                // Gọi API để lấy dữ liệu
                 const response = await fetch(`${API_URL}/attendance`);
                 const data = await response.json();
                 
                 if (data.success && data.records.length > 0) {
                     table.innerHTML = '';
                     
-                    data.records.forEach(record => {
+                    // Thống kê
+                    let intruderCount = 0;
+                    let attendanceCount = 0;
+                    let hasRecentIntruder = false;
+                    const today = new Date().toLocaleDateString('vi-VN');
+                    
+                    data.records.forEach((record, index) => {
+                        const isIntruder = record.id === 'UNKNOWN' || record.name.includes('NGƯỜI LẠ');
+                        const isToday = record.date === today;
+                        
+                        if (isIntruder) {
+                            intruderCount++;
+                            if (index < 5) hasRecentIntruder = true;
+                        } else if (isToday) {
+                            attendanceCount++;
+                        }
+                        
+                        const rowClass = isIntruder ? 'intruder-row' : '';
+                        const badgeClass = isIntruder ? 'badge-danger' : 'badge-success';
+                        
+                        // ⭐ Hiển thị ảnh
+                        let photoHTML = '';
+                        if (record.photo && record.photo.trim() !== '') {
+                            photoHTML = `<img src="${record.photo}" class="photo-thumbnail" onclick="showPhoto('${record.photo}')" alt="Ảnh ${record.name}">`;
+                        } else {
+                            photoHTML = `<span class="no-photo">Không có ảnh</span>`;
+                        }
+                        
                         const row = `
-                            <tr>
+                            <tr class="${rowClass}">
                                 <td>${record.id}</td>
                                 <td>${record.name}</td>
                                 <td>${record.date}</td>
                                 <td>${record.time}</td>
-                                <td><span class="badge badge-success">${record.status}</span></td>
+                                <td><span class="badge ${badgeClass}">${record.status}</span></td>
+                                <td class="photo-cell">${photoHTML}</td>
                             </tr>
                         `;
                         table.innerHTML += row;
                     });
                     
-                    document.getElementById('systemStatus').textContent = 'Sẵn sàng';
+                    // Cập nhật thống kê
+                    document.getElementById('totalAttendance').textContent = attendanceCount;
+                    document.getElementById('totalIntruders').textContent = intruderCount;
+                    document.getElementById('totalRecords').textContent = data.total;
+                    
+                    // Hiện banner cảnh báo nếu có người lạ gần đây
+                    const alertBanner = document.getElementById('alertBanner');
+                    if (hasRecentIntruder) {
+                        alertBanner.classList.add('active');
+                    } else {
+                        alertBanner.classList.remove('active');
+                    }
+                    
+                    // Cập nhật thời gian
+                    const now = new Date();
+                    document.getElementById('lastUpdate').textContent = 
+                        now.toLocaleString('vi-VN', { 
+                            hour: '2-digit', 
+                            minute: '2-digit',
+                            second: '2-digit',
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric'
+                        });
+                    
                 } else {
-                    table.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 40px;">Chưa có dữ liệu chấm công</td></tr>';
+                    table.innerHTML = `
+                        <tr>
+                            <td colspan="6" style="text-align: center; padding: 40px;">
+                                Chưa có dữ liệu chấm công
+                            </td>
+                        </tr>
+                    `;
+                    document.getElementById('totalAttendance').textContent = '0';
+                    document.getElementById('totalIntruders').textContent = '0';
+                    document.getElementById('totalRecords').textContent = '0';
                 }
             } catch (error) {
                 console.error('Lỗi tải dữ liệu:', error);
-                showStatus('❌ Không thể tải dữ liệu từ server', 'error');
+                table.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 40px; color: red;">
+                            ❌ Không thể kết nối đến server. Vui lòng kiểm tra Flask API và ngrok!
+                        </td>
+                    </tr>
+                `;
             } finally {
                 loading.classList.remove('active');
             }
@@ -368,8 +531,8 @@
         // Tự động tải dữ liệu khi vào trang
         window.onload = () => {
             loadAttendance();
-            // Tự động refresh mỗi 30 giây
-            setInterval(loadAttendance, 30000);
+            // Tự động refresh mỗi 10 giây để phát hiện cảnh báo nhanh
+            setInterval(loadAttendance, 10000);
         };
     </script>
 </body>
